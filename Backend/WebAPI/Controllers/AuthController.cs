@@ -1,102 +1,67 @@
-//using Core.Domain.Entities;
-//using Core.DTOs;
-//using Microsoft.AspNetCore.Identity;
-//using Microsoft.AspNetCore.Mvc;
-//using Microsoft.IdentityModel.Tokens;
-//using System.IdentityModel.Tokens.Jwt;
-//using System.Security.Claims;
-//using System.Text;
-
-
-//[Route("api/auth")]
-//[ApiController]
-//public class AuthController : ControllerBase
-//{
-//    private readonly UserManager<ApplicationUser> _userManager;
-//    private readonly SignInManager<ApplicationUser> _signInManager;
-//    private readonly IConfiguration _configuration;
-//}
-
-//public AuthController(UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, IConfiguration configuration)
-//{
-//    _userManager = userManager;
-//    _signInManager = signInManager;
-//    _configuration = configuration;
-//}
-
-//[HttpPost("register")]
-//public async Task<IActionResult> Register([FromBody] RegisterDto model)
-//{
-//    var userExists = await _userManager.FindByNameAsync(model.Email);
-//    if userExists != null
-//        return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = "User already exists!" });
-    
-//    var user = new ApplicationUser()
-//    {
-//        UserName = model.Email
-//        Email = model.Email,
-//        FullName = model.FullName
-//        WalletAddress = model.WalletAddress || null,
-//        SecurityStamp = Guid.NewGuid().ToString(),
-//    };
-
-//    var result = await _userManager.CreateAsync(user, model.Password);
-//    if (!result.Succeeded)
-//        return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = "User creation failed! Please check user details and try again." });
-//}
-
-//[HttpPost("login")]
-//public async Task <IActionResult> Login([FromBody] LoginDto model)
-//{
-//    var user = await _userManager.FindByEmailAsync(model.Email);
-//    if (user == null || !(await _userManager.CheckPasswordAsync(user, model.password)))
-//        return Unauthorized(new Response { Status = "Error", Message = "Invalid credentials" });
-
-//    var authClaims = new List<Claim>
-//    {
-//        new Claim(ClaimTypes.Name, user.Email),
-//        new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
-//    };
-
-//    var authSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JWT:Key"]));
-//    var token = new JwtSecurityToken(
-//        issuer: _configuration["JWT:Issuer"],
-//        audience: _configuration["JWT:Audience"],
-//        expires: DateTime.Now.AddHours(3),
-//        claims: authClaims,
-//        signingCredentials: new SigningCredentials(authSigningKey, SecurityAlgorithms.HmacSha256)
-//    );
-
-//    return Ok(new { token = new JwtSecurityTokenHandler().WriteToken(token) });
-//}
-
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using System.Threading.Tasks;
+using ViWallet.Data;
+using ViWallet.Models;
 
-namespace WebAPI.Controllers
+namespace ViWallet.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
     public class AuthController : ControllerBase
     {
-        // Constructor and methods go here
+        private readonly AppDbContext _dbContext;
 
-        public AuthController()
+        public AuthController(AppDbContext dbContext)
         {
-            // Constructor implementation
-        }
-
-        [HttpPost("login")]
-        public IActionResult Login()
-        {
-            // Logic for login goes here
-            return Ok();
+            _dbContext = dbContext;
         }
 
         [HttpPost("register")]
-        public IActionResult Register()
+        public async Task<IActionResult> Register([FromBody] RegisterDto dto)
         {
-            // Logic for register goes here
-            return Ok();
+            // Basic validation (in real apps use FluentValidation or similar)
+            if (await _dbContext.Users.AnyAsync(u => u.Email == dto.Email))
+                return BadRequest("Email already registered.");
+
+            // For demo purposes, we use a very simple hash (DO NOT use in production)
+            var newUser = new User
+            {
+                FullName = dto.FullName,
+                Email = dto.Email,
+                PasswordHash = dto.Password // Replace with proper hash
+            };
+
+            _dbContext.Users.Add(newUser);
+            await _dbContext.SaveChangesAsync();
+
+            return Ok("User registered");
+        }
+
+        [HttpPost("login")]
+        public async Task<IActionResult> Login([FromBody] LoginDto dto)
+        {
+            // For demo, compare plain text (in production use hashed passwords & salted comparisons)
+            var user = await _dbContext.Users.FirstOrDefaultAsync(u => u.Email == dto.Email && u.PasswordHash == dto.Password);
+            if (user == null)
+                return Unauthorized("Invalid credentials");
+
+            // Create and return a token (e.g., JWT) in a real application. Here we just return a message.
+            return Ok("User logged in");
         }
     }
-}s
+
+    // DTO classes for exchanging data.
+    public class RegisterDto
+    {
+        public string FullName { get; set; }
+        public string Email { get; set; }
+        public string Password { get; set; }
+    }
+
+    public class LoginDto
+    {
+        public string Email { get; set; }
+        public string Password { get; set; }
+    }
+}
