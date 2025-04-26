@@ -106,6 +106,11 @@ namespace ViWallet.Models
 
         [Column("LastModified_20118073")]
         public DateTime LastModified { get; set; } = DateTime.UtcNow;
+
+        /*  --------  admin-revert metadata  -------- */
+        public bool IsReverted { get; set; } = false;
+        public int? RevertedBy { get; set; }
+        public DateTime? RevertedAt { get; set; }
     }
 
     public class Wallet

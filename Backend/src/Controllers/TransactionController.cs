@@ -28,8 +28,6 @@ namespace ViWallet.Controllers
 
             
             var senderId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
-            if (dto.ReceiverId == senderId)
-                return BadRequest("You cannot transfer to yourself.");
 
             var sWallet = await _ctx.Wallets
                 .FirstOrDefaultAsync(w => w.OwnerId == senderId && w.CurrencyId == dto.CurrencyId);
@@ -39,6 +37,8 @@ namespace ViWallet.Controllers
 
             var receiverExists = await _ctx.Users.AnyAsync(u => u.UserId == dto.ReceiverId);
             if (!receiverExists) return BadRequest("Receiver does not exist.");
+            if (dto.ReceiverId == senderId)
+                return BadRequest("You cannot transfer to yourself.");
 
             var rWallet = await _ctx.Wallets
                 .FirstOrDefaultAsync(w => w.OwnerId == dto.ReceiverId && w.CurrencyId == dto.CurrencyId);
@@ -73,11 +73,120 @@ namespace ViWallet.Controllers
             return Ok("Done");
         }
 
-        public class SendMoneyDto
+        /* ----------  1.  LIST  ---------- */
+        [ApiController]
+        [Route("api/admin/transactions")]
+        [Authorize(Roles = "Admin")]
+        public class AdminTransactionsController : ControllerBase
+        {
+            private readonly AppDbContext _ctx;
+
+            public AdminTransactionsController(AppDbContext ctx)
+            {
+                _ctx = ctx;
+            }
+
+            [HttpGet]
+            public async Task<IActionResult> ListTransactions(int page = 1, int pageSize = 10)
+            {
+                var data = await _ctx.Transactions
+                    .Include(t => t.Currency)
+                    .OrderByDescending(t => t.TransactionDate)
+                    .Skip((page - 1) * pageSize)
+                    .Take(pageSize)
+                    .Select(t => new
+                    {
+                        t.TransactionId,
+                        t.SenderId,
+                        t.ReceiverId,
+                        Currency = t.Currency.Code,
+                        t.Amount,
+                        t.TransactionDate,
+                        t.IsReverted
+                    })
+                    .ToListAsync();
+
+                return Ok(data);
+            }
+        }
+
+
+        /* ----------  2.  REVERT  ---------- */
+        [HttpPost("{id:int}/revert")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> Revert(int id)
+        {
+            var tx = await _ctx.Transactions.FindAsync(id);
+            if (tx == null) return NotFound();
+            if (tx.IsReverted) return BadRequest("Already reverted.");
+
+            // wallets
+            var senderWallet = await _ctx.Wallets
+                .FirstOrDefaultAsync(w => w.OwnerId == tx.SenderId && w.CurrencyId == tx.CurrencyId);
+            var receiverWallet = await _ctx.Wallets
+                .FirstOrDefaultAsync(w => w.OwnerId == tx.ReceiverId && w.CurrencyId == tx.CurrencyId);
+
+            if (receiverWallet == null || senderWallet == null)
+                return BadRequest("Wallet missing; manual intervention required.");
+
+            if (receiverWallet.Balance < tx.Amount)
+                return BadRequest("Receiver balance insufficient to revert.");
+
+            // reverse transfer
+            receiverWallet.Balance -= tx.Amount;
+            senderWallet.Balance += tx.Amount;
+
+            tx.IsReverted = true;
+            tx.RevertedBy = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            tx.RevertedAt = DateTime.UtcNow;
+
+            // optional: journal entry
+            _ctx.LogEntries.Add(new LogEntry
+            {
+                TableName = "Transactions",
+                OperationType = "REVERT",
+                OperationDate = DateTime.UtcNow
+            });
+
+            await _ctx.SaveChangesAsync();
+            return Ok("Transaction reverted.");
+        }
+
+        /* ----------  3.  GET MY TRANSACTIONS  ---------- */
+        [Authorize]
+        [HttpGet("my-transactions")]
+        public async Task<IActionResult> GetMyTransactions()
+        {
+            // Get the logged-in user's ID
+            var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+
+            // Fetch transactions where the user is either the sender or the receiver
+            var transactions = await _ctx.Transactions
+                .Include(t => t.Currency)
+                .Where(t => t.SenderId == userId || t.ReceiverId == userId)
+                .OrderByDescending(t => t.TransactionDate)
+                .Select(t => new
+                {
+                    t.TransactionId,
+                    t.SenderId,
+                    t.ReceiverId,
+                    Currency = t.Currency.Code,
+                    t.Amount,
+                    t.TransactionDate,
+                    t.IsReverted
+                })
+                .ToListAsync();
+
+            return Ok(transactions);
+        }
+
+    }
+
+    public class SendMoneyDto
         {
             public int ReceiverId { get; set; }
             public int CurrencyId { get; set; }
             public decimal Amount { get; set; }
         }
-    }
+    
 }
