@@ -1,8 +1,10 @@
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Threading.Tasks;
 using ViWallet.Data;
 using ViWallet.Models;
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
 
 namespace ViWallet.Controllers
 {
@@ -10,48 +12,72 @@ namespace ViWallet.Controllers
     [Route("api/[controller]")]
     public class TransactionsController : ControllerBase
     {
-        private readonly AppDbContext _dbContext;
+        private readonly AppDbContext _ctx;
 
-        public TransactionsController(AppDbContext dbContext)
+        public TransactionsController(AppDbContext ctx)
         {
-            _dbContext = dbContext;
+            _ctx = ctx;
         }
 
+        [Authorize]
         [HttpPost("send")]
-        public async Task<IActionResult> SendMoney([FromBody] SendMoneyDto dto)
+        public async Task<IActionResult> Send([FromBody] SendMoneyDto dto)
         {
-            // In a real scenario, you would have authentication so that you know who is the sender.
-            // Here we assume sender ID is provided.
-            var sender = await _dbContext.Users.FindAsync(dto.SenderId);
-            var receiver = await _dbContext.Users.FindAsync(dto.ReceiverId);
-            var currency = await _dbContext.Currencies.FindAsync(dto.CurrencyId);
+            if (dto.Amount <= 0)
+                return BadRequest("Amount must be a positive number.");
 
-            if (sender == null || receiver == null || currency == null)
-                return BadRequest("Invalid sender, receiver or currency.");
+            
+            var senderId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            if (dto.ReceiverId == senderId)
+                return BadRequest("You cannot transfer to yourself.");
 
-            // Business logic (e.g., check balances) goes here.
-            // For now, simply create a transaction record.
-            var transaction = new Transaction
+            var sWallet = await _ctx.Wallets
+                .FirstOrDefaultAsync(w => w.OwnerId == senderId && w.CurrencyId == dto.CurrencyId);
+            if (sWallet == null) return BadRequest("Sender has no wallet in that currency");
+
+            if (sWallet.Balance < dto.Amount) return BadRequest("Insufficient funds");
+
+            var receiverExists = await _ctx.Users.AnyAsync(u => u.UserId == dto.ReceiverId);
+            if (!receiverExists) return BadRequest("Receiver does not exist.");
+
+            var rWallet = await _ctx.Wallets
+                .FirstOrDefaultAsync(w => w.OwnerId == dto.ReceiverId && w.CurrencyId == dto.CurrencyId);
+
+            if (rWallet == null)
             {
-                SenderId = sender.UserId,
-                ReceiverId = receiver.UserId,
-                CurrencyId = currency.CurrencyId,
+                rWallet = new Wallet
+                {
+                    Name = "Auto " + dto.CurrencyId,
+                    CurrencyId = dto.CurrencyId,
+                    OwnerId = dto.ReceiverId,
+                    Balance = 0M
+                };
+                _ctx.Wallets.Add(rWallet);
+                await _ctx.SaveChangesAsync();
+            }
+
+            // move money
+            sWallet.Balance -= dto.Amount;
+            rWallet.Balance += dto.Amount;
+
+            _ctx.Transactions.Add(new Transaction
+            {
+                SenderId = senderId,
+                ReceiverId = dto.ReceiverId,
+                CurrencyId = dto.CurrencyId,
                 Amount = dto.Amount,
-                TransactionDate = System.DateTime.UtcNow
-            };
+                TransactionDate = DateTime.UtcNow
+            });
 
-            _dbContext.Transactions.Add(transaction);
-            await _dbContext.SaveChangesAsync();
-
-            return Ok("Transaction successful");
+            await _ctx.SaveChangesAsync();
+            return Ok("Done");
         }
-    }
 
-    public class SendMoneyDto
-    {
-        public int SenderId { get; set; }
-        public int ReceiverId { get; set; }
-        public int CurrencyId { get; set; }
-        public decimal Amount { get; set; }
+        public class SendMoneyDto
+        {
+            public int ReceiverId { get; set; }
+            public int CurrencyId { get; set; }
+            public decimal Amount { get; set; }
+        }
     }
 }

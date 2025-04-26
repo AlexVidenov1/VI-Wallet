@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
@@ -10,6 +10,7 @@ using System.Text;
 using System.Threading.Tasks;
 using ViWallet.Data;
 using ViWallet.Models;
+
 
 namespace ViWallet.Controllers
 {
@@ -29,27 +30,47 @@ namespace ViWallet.Controllers
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterDto dto)
         {
-            // Basic validation (in real apps use proper validation & secure hashing)
             if (await _dbContext.Users.AnyAsync(u => u.Email == dto.Email))
                 return BadRequest("Email already registered.");
+
+            var viUserRoleId = await _dbContext.Roles
+                               .Where(r => r.Name == "ViUser")
+                               .Select(r => r.RoleId)
+                               .FirstAsync();
+
+            var eurId = await _dbContext.Currencies
+            .Where(c => c.Code == "EUR")
+            .Select(c => c.CurrencyId)
+            .FirstAsync();
 
             var newUser = new User
             {
                 FullName = dto.FullName,
                 Email = dto.Email,
-                PasswordHash = dto.Password // Replace with a proper hash in production
+                PasswordHash = dto.Password,
+                RoleId = viUserRoleId
             };
 
             _dbContext.Users.Add(newUser);
             await _dbContext.SaveChangesAsync();
 
-            return Ok("User registered");
+            var wallet = new Wallet
+            {
+                Name = "EUR Wallet",
+                CurrencyId = eurId,
+                OwnerId = newUser.UserId,
+                Balance = 0M
+            };
+
+            _dbContext.Wallets.Add(wallet);
+            await _dbContext.SaveChangesAsync();
+
+            return Ok("User registered with default EUR wallet");
         }
 
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginDto dto)
         {
-            // In production, compare hashed passwords
             var user = await _dbContext.Users.FirstOrDefaultAsync(
                 u => u.Email == dto.Email && u.PasswordHash == dto.Password
             );
@@ -57,11 +78,10 @@ namespace ViWallet.Controllers
             if (user == null)
                 return Unauthorized("Invalid credentials");
 
-            // Create token claims.
             var claims = new List<Claim>
         {
             new Claim(ClaimTypes.Name, user.Email),
-            new Claim("FullName", user.FullName),  // Custom claim if needed
+            new Claim("FullName", user.FullName),
             new Claim(ClaimTypes.NameIdentifier, user.UserId.ToString())
         };
 

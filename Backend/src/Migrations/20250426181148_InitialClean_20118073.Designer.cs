@@ -12,8 +12,8 @@ using ViWallet.Data;
 namespace WebAPI.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20250426151923_AddRoles_20118073")]
-    partial class AddRoles_20118073
+    [Migration("20250426181148_InitialClean_20118073")]
+    partial class InitialClean_20118073
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -45,12 +45,17 @@ namespace WebAPI.Migrations
                         .HasColumnType("datetime2")
                         .HasColumnName("LastModified_20118073");
 
-                    b.Property<int>("UserId")
+                    b.Property<int?>("UserId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("WalletId")
                         .HasColumnType("int");
 
                     b.HasKey("CardId");
 
                     b.HasIndex("UserId");
+
+                    b.HasIndex("WalletId");
 
                     b.ToTable("Cards");
                 });
@@ -84,6 +89,24 @@ namespace WebAPI.Migrations
                     b.HasKey("CurrencyId");
 
                     b.ToTable("Currencies");
+
+                    b.HasData(
+                        new
+                        {
+                            CurrencyId = 1,
+                            Code = "BGN",
+                            ExchangeRate = 1.9583m,
+                            LastModified = new DateTime(2024, 4, 26, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Name = "Lev"
+                        },
+                        new
+                        {
+                            CurrencyId = 2,
+                            Code = "EUR",
+                            ExchangeRate = 1m,
+                            LastModified = new DateTime(2024, 4, 26, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Name = "Euro"
+                        });
                 });
 
             modelBuilder.Entity("ViWallet.Models.LogEntry", b =>
@@ -236,15 +259,54 @@ namespace WebAPI.Migrations
                     b.ToTable("Users");
                 });
 
+            modelBuilder.Entity("ViWallet.Models.Wallet", b =>
+                {
+                    b.Property<int>("WalletId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("WalletId"));
+
+                    b.Property<decimal>("Balance")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int>("CurrencyId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("LastModified")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("LastModified_20118073");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<int>("OwnerId")
+                        .HasColumnType("int");
+
+                    b.HasKey("WalletId");
+
+                    b.HasIndex("CurrencyId");
+
+                    b.HasIndex("OwnerId");
+
+                    b.ToTable("Wallets");
+                });
+
             modelBuilder.Entity("ViWallet.Models.Card", b =>
                 {
-                    b.HasOne("ViWallet.Models.User", "Owner")
+                    b.HasOne("ViWallet.Models.User", null)
                         .WithMany("Cards")
-                        .HasForeignKey("UserId")
+                        .HasForeignKey("UserId");
+
+                    b.HasOne("ViWallet.Models.Wallet", "Wallet")
+                        .WithMany("Cards")
+                        .HasForeignKey("WalletId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Owner");
+                    b.Navigation("Wallet");
                 });
 
             modelBuilder.Entity("ViWallet.Models.Transaction", b =>
@@ -285,6 +347,25 @@ namespace WebAPI.Migrations
                     b.Navigation("Role");
                 });
 
+            modelBuilder.Entity("ViWallet.Models.Wallet", b =>
+                {
+                    b.HasOne("ViWallet.Models.Currency", "Currency")
+                        .WithMany()
+                        .HasForeignKey("CurrencyId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("ViWallet.Models.User", "Owner")
+                        .WithMany("Wallets")
+                        .HasForeignKey("OwnerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Currency");
+
+                    b.Navigation("Owner");
+                });
+
             modelBuilder.Entity("ViWallet.Models.Currency", b =>
                 {
                     b.Navigation("Transactions");
@@ -302,6 +383,13 @@ namespace WebAPI.Migrations
                     b.Navigation("ReceivedTransactions");
 
                     b.Navigation("SentTransactions");
+
+                    b.Navigation("Wallets");
+                });
+
+            modelBuilder.Entity("ViWallet.Models.Wallet", b =>
+                {
+                    b.Navigation("Cards");
                 });
 #pragma warning restore 612, 618
         }

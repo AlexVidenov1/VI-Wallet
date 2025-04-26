@@ -40,6 +40,7 @@ namespace ViWallet.Models
         public DateTime LastModified { get; set; } = DateTime.UtcNow;
 
         public ICollection<Card> Cards { get; set; } = new HashSet<Card>();
+        public ICollection<Wallet> Wallets { get; set; } = new HashSet<Wallet>();
 
         [InverseProperty(nameof(Transaction.Sender))]
         public ICollection<Transaction> SentTransactions { get; set; } = new HashSet<Transaction>();
@@ -57,8 +58,8 @@ namespace ViWallet.Models
 
         [Required] public DateTime ExpirationDate { get; set; }
 
-        public int UserId { get; set; }
-        public User Owner { get; set; } = null!;
+        public int WalletId { get; set; }
+        public Wallet Wallet { get; set; } = null!;
 
         [Column("LastModified_20118073")]
         public DateTime LastModified { get; set; } = DateTime.UtcNow;
@@ -105,5 +106,28 @@ namespace ViWallet.Models
 
         [Column("LastModified_20118073")]
         public DateTime LastModified { get; set; } = DateTime.UtcNow;
+    }
+
+    public class Wallet
+    {
+        [Key] public int WalletId { get; set; }
+
+        [Required, MaxLength(50)]
+        public string Name { get; set; } = "Default";
+
+        [Required] public int CurrencyId { get; set; }
+        public Currency Currency { get; set; } = null!;
+
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal Balance { get; set; } = 0M;
+
+        // owner
+        public int OwnerId { get; set; }
+        public User Owner { get; set; } = null!;
+
+        [Column("LastModified_20118073")]
+        public DateTime LastModified { get; set; } = DateTime.UtcNow;
+
+        public ICollection<Card> Cards { get; set; } = new HashSet<Card>();
     }
 }
