@@ -24,7 +24,6 @@ namespace ViWallet.Data
         {
             base.OnModelCreating(modelBuilder);
 
-            // Configure the one-to-many relationship for transactions.
             modelBuilder.Entity<Transaction>()
                 .HasOne(t => t.Sender)
                 .WithMany(u => u.SentTransactions)
@@ -36,14 +35,24 @@ namespace ViWallet.Data
                 .WithMany(u => u.ReceivedTransactions)
                 .HasForeignKey(t => t.ReceiverId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            // Specify decimal precision for Currency.ExchangeRate
+            modelBuilder.Entity<Currency>()
+                .Property(c => c.ExchangeRate)
+                .HasPrecision(18, 4);
+
+            // Specify decimal precision for Transaction.Amount
+            modelBuilder.Entity<Transaction>()
+                .Property(t => t.Amount)
+                .HasPrecision(18, 4);
         }
 
         public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         {
             // Inspect ChangeTracker for entries that are Added or Modified.
             var entries = ChangeTracker.Entries()
-                .Where(e => e.State == EntityState.Added || e.State == EntityState.Modified);
-
+                .Where(e => e.State == EntityState.Added || e.State == EntityState.Modified)
+                .ToList();
             foreach (var entry in entries)
             {
                 // We record the table name and the operation performed.
