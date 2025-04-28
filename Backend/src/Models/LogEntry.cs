@@ -9,10 +9,10 @@ namespace ViWallet.Models
         public int LogEntryId { get; set; }
 
         [Required]
-        public string TableName { get; set; }
+        public string TableName { get; set; } = string.Empty;
 
         [Required]
-        public string OperationType { get; set; }
+        public string OperationType { get; set; } = string.Empty;
 
         public DateTime OperationDate { get; set; } = DateTime.UtcNow;
     }

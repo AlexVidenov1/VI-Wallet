@@ -71,30 +71,71 @@ namespace ViWallet.Controllers
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginDto dto)
         {
-            var user = await _dbContext.Users.FirstOrDefaultAsync(
-                u => u.Email == dto.Email && u.PasswordHash == dto.Password
-            );
+            var user = await _dbContext.Users
+                .Include(u => u.Role) // Ensure Role is included
+                .FirstOrDefaultAsync(u => u.Email == dto.Email && u.PasswordHash == dto.Password);
 
             if (user == null)
                 return Unauthorized("Invalid credentials");
 
-            var claims = new List<Claim>
-        {
-            new Claim(ClaimTypes.Name, user.Email),
-            new Claim("FullName", user.FullName),
-            new Claim(ClaimTypes.NameIdentifier, user.UserId.ToString())
-        };
+            // Check subscription
+            var sub = await _dbContext.Subscriptions.FirstOrDefaultAsync(s => s.UserId == user.UserId);
+            if (sub == null)
+            {
+                sub = new Subscription
+                {
+                    UserId = user.UserId,
+                    PaidUntil = DateTime.UtcNow.AddMonths(1)
+                };
+                _dbContext.Subscriptions.Add(sub);
+            }
+            else
+            {
+                sub.PaidUntil = sub.PaidUntil < DateTime.UtcNow
+                    ? DateTime.UtcNow.AddMonths(1)
+                    : sub.PaidUntil.AddMonths(1);
+            }
 
-            // Read JWT settings from configuration.
+            // Update user role based on subscription
+            if (sub.PaidUntil > DateTime.UtcNow)
+            {
+                var proViUserRoleId = await _dbContext.Roles
+                    .Where(r => r.Name == "ProViUser")
+                    .Select(r => r.RoleId)
+                    .FirstAsync();
+                user.RoleId = proViUserRoleId;
+            }
+            else
+            {
+                var viUserRoleId = await _dbContext.Roles
+                    .Where(r => r.Name == "ViUser")
+                    .Select(r => r.RoleId)
+                    .FirstAsync();
+                user.RoleId = viUserRoleId;
+            }
+
+            await _dbContext.SaveChangesAsync();
+            await _dbContext.Entry(user).Reference(u => u.Role).LoadAsync();
+
+            var claims = new List<Claim>
+            {
+                new Claim(ClaimTypes.Name, user.Email),
+                new Claim("FullName", user.FullName),
+                new Claim(ClaimTypes.NameIdentifier, user.UserId.ToString()),
+                new Claim(ClaimTypes.Role, user.Role?.Name ?? "ViUser") // Default to "ViUser" if Role is null
+            };
+
             var jwtSettings = _configuration.GetSection("Jwt");
             var key = jwtSettings["Key"];
             var issuer = jwtSettings["Issuer"];
             var audience = jwtSettings["Audience"];
 
+            if (string.IsNullOrEmpty(key))
+                return StatusCode(500, "JWT Key is not configured.");
+
             var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key));
             var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
 
-            // Create the token.
             var tokenDescriptor = new JwtSecurityToken(
                 issuer: issuer,
                 audience: audience,
@@ -105,22 +146,23 @@ namespace ViWallet.Controllers
             var tokenHandler = new JwtSecurityTokenHandler();
             var tokenString = tokenHandler.WriteToken(tokenDescriptor);
 
-            // Return the token as JSON.
             return Ok(new { token = tokenString });
         }
+
+
     }
 
     // DTO classes for exchanging data.
     public class RegisterDto
     {
-        public string FullName { get; set; }
-        public string Email { get; set; }
-        public string Password { get; set; }
+        public string FullName { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
+        public string Password { get; set; } = string.Empty;
     }
 
     public class LoginDto
     {
-        public string Email { get; set; }
-        public string Password { get; set; }
+        public string Email { get; set; } = string.Empty;
+        public string Password { get; set; } = string.Empty;
     }
 }

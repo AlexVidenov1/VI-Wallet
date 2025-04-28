@@ -135,4 +135,11 @@ namespace ViWallet.Models
 
         public ICollection<Card> Cards { get; set; } = new HashSet<Card>();
     }
+    public class Subscription
+    {
+        [Key] public int SubscriptionId { get; set; }
+        public int UserId { get; set; }
+        public User User { get; set; } = null!;
+        public DateTime PaidUntil { get; set; }     // e.g. 2024-05-27  
+    }
 }

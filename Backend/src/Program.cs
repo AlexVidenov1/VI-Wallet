@@ -4,18 +4,19 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using ViWallet.Data;
 using Microsoft.OpenApi.Models;
+using ViWallet.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// Add services to the container.
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddScoped<UserService>();
 builder.Services.AddSwaggerGen();
 
-// Configure authentication with JWT Bearer
+
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -23,9 +24,12 @@ builder.Services.AddAuthentication(options =>
 })
 .AddJwtBearer(options =>
 {
-    // Read some settings (like Key, Issuer, Audience) from configuration (appsettings.json)
     var jwtSettings = builder.Configuration.GetSection("Jwt");
     var key = jwtSettings["Key"];
+    if (string.IsNullOrEmpty(key))
+    {
+        throw new InvalidOperationException("JWT Key is not configured in appsettings.json.");
+    }
     options.TokenValidationParameters = new TokenValidationParameters
     {
         ValidateIssuerSigningKey = true,
@@ -41,7 +45,6 @@ builder.Services.AddSwaggerGen(options =>
 {
     options.SwaggerDoc("v1", new OpenApiInfo { Title = "VI-WALLET API", Version = "v1" });
 
-    // Define the BearerAuth scheme
     options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         Description = "JWT Authorization header using the Bearer scheme.\r\n\r\nEnter 'Bearer' [space] and then your token in the text input below.\r\n\r\nExample: \"Bearer abcdefgh12345\"",
@@ -51,7 +54,6 @@ builder.Services.AddSwaggerGen(options =>
         Scheme = "Bearer"
     });
 
-    // Add a security requirement so that the JWT bearer token is required globally
     options.AddSecurityRequirement(new OpenApiSecurityRequirement()
 {
     {
@@ -72,7 +74,6 @@ builder.Services.AddSwaggerGen(options =>
 });
 var app = builder.Build();
 
-// Enable Swagger middleware
 app.UseSwagger();
 app.UseSwaggerUI(c =>
 {

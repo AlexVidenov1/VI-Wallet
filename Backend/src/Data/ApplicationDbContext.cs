@@ -20,6 +20,7 @@ namespace ViWallet.Data
         public DbSet<Transaction> Transactions => Set<Transaction>();
         public DbSet<LogEntry> LogEntries => Set<LogEntry>();
         public DbSet<Wallet> Wallets => Set<Wallet>();
+        public DbSet<Subscription> Subscriptions => Set<Subscription>();
 
         /* ----------  Model config  ---------- */
         protected override void OnModelCreating(ModelBuilder modelBuilder)

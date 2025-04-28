@@ -180,12 +180,16 @@ C:\Users\Alex\Desktop\UNWE-FINAL\VI-Wallet\Backend\src\bin\Debug\net9.0\Azure.Co
 C:\Users\Alex\Desktop\UNWE-FINAL\VI-Wallet\Backend\src\bin\Debug\net9.0\Azure.Identity.dll
 C:\Users\Alex\Desktop\UNWE-FINAL\VI-Wallet\Backend\src\bin\Debug\net9.0\Humanizer.dll
 C:\Users\Alex\Desktop\UNWE-FINAL\VI-Wallet\Backend\src\bin\Debug\net9.0\Microsoft.AspNetCore.Authentication.JwtBearer.dll
+C:\Users\Alex\Desktop\UNWE-FINAL\VI-Wallet\Backend\src\bin\Debug\net9.0\Microsoft.AspNetCore.JsonPatch.dll
+C:\Users\Alex\Desktop\UNWE-FINAL\VI-Wallet\Backend\src\bin\Debug\net9.0\Microsoft.AspNetCore.Mvc.Razor.Extensions.dll
 C:\Users\Alex\Desktop\UNWE-FINAL\VI-Wallet\Backend\src\bin\Debug\net9.0\Microsoft.AspNetCore.OpenApi.dll
+C:\Users\Alex\Desktop\UNWE-FINAL\VI-Wallet\Backend\src\bin\Debug\net9.0\Microsoft.AspNetCore.Razor.Language.dll
 C:\Users\Alex\Desktop\UNWE-FINAL\VI-Wallet\Backend\src\bin\Debug\net9.0\Microsoft.Bcl.AsyncInterfaces.dll
 C:\Users\Alex\Desktop\UNWE-FINAL\VI-Wallet\Backend\src\bin\Debug\net9.0\Microsoft.Build.Locator.dll
 C:\Users\Alex\Desktop\UNWE-FINAL\VI-Wallet\Backend\src\bin\Debug\net9.0\Microsoft.CodeAnalysis.dll
 C:\Users\Alex\Desktop\UNWE-FINAL\VI-Wallet\Backend\src\bin\Debug\net9.0\Microsoft.CodeAnalysis.CSharp.dll
 C:\Users\Alex\Desktop\UNWE-FINAL\VI-Wallet\Backend\src\bin\Debug\net9.0\Microsoft.CodeAnalysis.CSharp.Workspaces.dll
+C:\Users\Alex\Desktop\UNWE-FINAL\VI-Wallet\Backend\src\bin\Debug\net9.0\Microsoft.CodeAnalysis.Razor.dll
 C:\Users\Alex\Desktop\UNWE-FINAL\VI-Wallet\Backend\src\bin\Debug\net9.0\Microsoft.CodeAnalysis.Workspaces.dll
 C:\Users\Alex\Desktop\UNWE-FINAL\VI-Wallet\Backend\src\bin\Debug\net9.0\Microsoft.CodeAnalysis.Workspaces.MSBuild.BuildHost.dll
 C:\Users\Alex\Desktop\UNWE-FINAL\VI-Wallet\Backend\src\bin\Debug\net9.0\Microsoft.CodeAnalysis.Workspaces.MSBuild.dll
@@ -217,6 +221,8 @@ C:\Users\Alex\Desktop\UNWE-FINAL\VI-Wallet\Backend\src\bin\Debug\net9.0\Microsof
 C:\Users\Alex\Desktop\UNWE-FINAL\VI-Wallet\Backend\src\bin\Debug\net9.0\Microsoft.SqlServer.Server.dll
 C:\Users\Alex\Desktop\UNWE-FINAL\VI-Wallet\Backend\src\bin\Debug\net9.0\Microsoft.Win32.SystemEvents.dll
 C:\Users\Alex\Desktop\UNWE-FINAL\VI-Wallet\Backend\src\bin\Debug\net9.0\Mono.TextTemplating.dll
+C:\Users\Alex\Desktop\UNWE-FINAL\VI-Wallet\Backend\src\bin\Debug\net9.0\Newtonsoft.Json.dll
+C:\Users\Alex\Desktop\UNWE-FINAL\VI-Wallet\Backend\src\bin\Debug\net9.0\Newtonsoft.Json.Bson.dll
 C:\Users\Alex\Desktop\UNWE-FINAL\VI-Wallet\Backend\src\bin\Debug\net9.0\Npgsql.dll
 C:\Users\Alex\Desktop\UNWE-FINAL\VI-Wallet\Backend\src\bin\Debug\net9.0\Npgsql.EntityFrameworkCore.PostgreSQL.dll
 C:\Users\Alex\Desktop\UNWE-FINAL\VI-Wallet\Backend\src\bin\Debug\net9.0\Swashbuckle.AspNetCore.Swagger.dll
