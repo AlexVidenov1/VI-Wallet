@@ -61,6 +61,8 @@ namespace ViWallet.Models
         public int WalletId { get; set; }
         public Wallet Wallet { get; set; } = null!;
 
+        public bool IsBlocked { get; set; } = false;
+
         [Column("LastModified_20118073")]
         public DateTime LastModified { get; set; } = DateTime.UtcNow;
     }
