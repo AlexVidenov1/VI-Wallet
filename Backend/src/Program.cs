@@ -8,6 +8,18 @@ using ViWallet.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Add CORS policy
+var MyCorsPolicy = "_myCorsPolicy";
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(MyCorsPolicy, policy =>
+    {
+        policy.WithOrigins("http://localhost:5173") // Replace with your frontend URL
+              .AllowAnyHeader()
+              .AllowAnyMethod();
+    });
+});
+
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
@@ -21,7 +33,6 @@ builder.Services.AddControllers()
         options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.Preserve;
         options.JsonSerializerOptions.WriteIndented = true;
     });
-
 
 builder.Services.AddAuthentication(options =>
 {
@@ -47,6 +58,7 @@ builder.Services.AddAuthentication(options =>
         ValidateLifetime = true
     };
 });
+
 builder.Services.AddSwaggerGen(options =>
 {
     options.SwaggerDoc("v1", new OpenApiInfo { Title = "VI-WALLET API", Version = "v1" });
@@ -61,33 +73,34 @@ builder.Services.AddSwaggerGen(options =>
     });
 
     options.AddSecurityRequirement(new OpenApiSecurityRequirement()
-{
     {
-        new OpenApiSecurityScheme
         {
-            Reference = new OpenApiReference
+            new OpenApiSecurityScheme
             {
-                Type = ReferenceType.SecurityScheme,
-                Id = "Bearer"
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                },
+                Scheme = "oauth2",
+                Name = "Bearer",
+                In = ParameterLocation.Header,
             },
-            Scheme = "oauth2",
-            Name = "Bearer",
-            In = ParameterLocation.Header,
-        },
-        new List<string>()
-    }
+            new List<string>()
+        }
+    });
 });
-});
+
 var app = builder.Build();
 
+// Enable CORS
 app.UseSwagger();
-app.UseSwaggerUI(c =>
-{
-    c.SwaggerEndpoint("/swagger/v1/swagger.json", "VI-WALLET API V1");
-});
+app.UseSwaggerUI();
+app.UseCors(p => p.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
 
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseCors(MyCorsPolicy);
 
 app.MapControllers();
 
