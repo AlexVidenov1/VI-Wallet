@@ -5,6 +5,7 @@ import Register from "./pages/auth/Register";
 import Dashboard from "./pages/Dashboard";
 import ProtectedRoute from "./components/ProtectedRoute";
 import TransactionsPage from "./pages/TransactionsPage";
+import WalletsPage from "./pages/WalletsPage";
 
 export default function AppRouter() {
     return (
@@ -20,7 +21,11 @@ export default function AppRouter() {
                     <Route path="/" element={<Dashboard />} />
                     <Route path="/transactions" element={<TransactionsPage />} /> {/* ← add */}
                 </Route>
-
+                <Route element={<ProtectedRoute />}>
+                    <Route path="/wallets" element={<WalletsPage />} />
+                    <Route path="/wallets/:id" element={<WalletsPage />} />
+                    <Route path="/wallets/:id/transactions" element={<TransactionsPage />} />
+                </Route>
                 <Route path="*" element={<Navigate to="/" />} />
             </Routes>
         </>

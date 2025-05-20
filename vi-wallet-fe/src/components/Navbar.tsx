@@ -18,7 +18,11 @@ export default function Navbar() {
                         VI-Wallet
                     </Link>
                 </Typography>
-
+                {token && (
+                    <Button color="inherit" component={Link} to="/wallets">
+                        Wallets
+                    </Button>
+                )}
                 {token && (
                     <Button color="inherit" component={Link} to="/transactions">
                         Transactions
