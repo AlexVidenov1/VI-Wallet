@@ -30,5 +30,5 @@ export default function Login() {
         <Button component={Link} to="/register">No account? Register</Button>
       </Box>
     </Paper>
-  );
+    );
 }

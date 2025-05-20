@@ -9,20 +9,15 @@ import { theme } from "./theme";
 
 const qc = new QueryClient();
 
-<ThemeProvider theme={theme}>
-   <QueryClientProvider client={qc}>
-      … your app …
-   </QueryClientProvider>
-</ThemeProvider>
-
-
 ReactDOM.createRoot(document.getElementById("root")!).render(
-  <React.StrictMode>
-    <CssBaseline />
-    <QueryClientProvider client={qc}>
-      <BrowserRouter>
-        <Router />
-      </BrowserRouter>
-    </QueryClientProvider>
-  </React.StrictMode>
+    <React.StrictMode>
+        <ThemeProvider theme={theme}>
+            <CssBaseline />
+            <QueryClientProvider client={qc}>
+                <BrowserRouter>
+                    <Router />
+                </BrowserRouter>
+            </QueryClientProvider>
+        </ThemeProvider>
+    </React.StrictMode>
 );
