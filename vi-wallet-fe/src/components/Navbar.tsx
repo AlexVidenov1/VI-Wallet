@@ -1,5 +1,6 @@
 import { AppBar, Toolbar, Typography, Button } from "@mui/material";
 import { Link, useNavigate } from "react-router-dom";
+import RoleChip from "./RoleChip";
 
 export default function Navbar() {
     const nav = useNavigate();
@@ -28,7 +29,6 @@ export default function Navbar() {
                         Transactions
                     </Button>
                 )}
-
                 {!token && (
                     <Button color="inherit" component={Link} to="/login">
                         Login
@@ -39,6 +39,7 @@ export default function Navbar() {
                         Cards
                     </Button> 
                 )}
+                    <RoleChip />
                 {token && (
                     <Button color="inherit" onClick={logout}>
                         Logout
