@@ -6,18 +6,21 @@ import Router from "./router";
 import CssBaseline from "@mui/material/CssBaseline";
 import { ThemeProvider } from "@mui/material/styles";
 import { theme } from "./theme";
+import { AuthProvider } from "./context/AuthContext";
 
 const qc = new QueryClient();
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
     <React.StrictMode>
         <ThemeProvider theme={theme}>
-            <CssBaseline />
-            <QueryClientProvider client={qc}>
-                <BrowserRouter>
-                    <Router />
-                </BrowserRouter>
-            </QueryClientProvider>
-        </ThemeProvider>
+            <AuthProvider>
+                <CssBaseline />
+                <QueryClientProvider client={qc}>
+                    <BrowserRouter>
+                        <Router />
+                    </BrowserRouter>
+                </QueryClientProvider>
+            </AuthProvider>
+       </ThemeProvider>
     </React.StrictMode>
 );
