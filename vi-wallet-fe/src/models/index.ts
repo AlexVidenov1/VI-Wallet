@@ -22,3 +22,15 @@ export interface Currency {
     code: string;
     name: string;
 }
+export interface Card {
+    cardId: number;
+    cardNumber: string;
+    expirationDate: string;   // ISO string
+    isBlocked: boolean;
+    walletId: number;
+    wallet: {                     // minimal data that comes from GET /Card/GetCards
+        name: string;
+        currencyCode: string;
+        balance: number;
+    };
+}

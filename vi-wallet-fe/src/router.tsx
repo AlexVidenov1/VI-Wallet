@@ -6,6 +6,7 @@ import Dashboard from "./pages/Dashboard";
 import ProtectedRoute from "./components/ProtectedRoute";
 import TransactionsPage from "./pages/TransactionsPage";
 import WalletsPage from "./pages/WalletsPage";
+import CardsPage from "./pages/CardsPage";
 
 export default function AppRouter() {
     return (
@@ -25,6 +26,12 @@ export default function AppRouter() {
                     <Route path="/wallets" element={<WalletsPage />} />
                     <Route path="/wallets/:id" element={<WalletsPage />} />
                     <Route path="/wallets/:id/transactions" element={<TransactionsPage />} />
+                </Route>
+                <Route element={<ProtectedRoute />}>
+                    <Route path="/" element={<Dashboard />} />
+                    <Route path="/transactions" element={<TransactionsPage />} />
+                    <Route path="/wallets" element={<WalletsPage />} />
+                    <Route path="/cards" element={<CardsPage />} />      {/* NEW */}
                 </Route>
                 <Route path="*" element={<Navigate to="/" />} />
             </Routes>

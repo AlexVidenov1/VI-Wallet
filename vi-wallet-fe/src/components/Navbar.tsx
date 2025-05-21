@@ -35,6 +35,11 @@ export default function Navbar() {
                     </Button>
                 )}
                 {token && (
+                    <Button color="inherit" component={Link} to="/cards">
+                        Cards
+                    </Button> 
+                )}
+                {token && (
                     <Button color="inherit" onClick={logout}>
                         Logout
                     </Button>
