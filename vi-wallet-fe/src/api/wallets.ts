@@ -25,3 +25,17 @@ export const createWallet = (input: CreateWalletInput) =>
 /* DELETE /api/Wallets/{id}  -> 204 NoContent */
 export const deleteWallet = (id: number) =>
     api.delete<void>(`/Wallets/${id}`);
+
+export async function updateWalletName(walletId: number, name: string) {
+    const token = localStorage.getItem("token");
+    const res = await fetch(`/api/wallets/${walletId}`, {
+        method: "PUT",
+        headers: {
+            "Content-Type": "application/json",
+            ...(token ? { Authorization: `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify({ name }),
+    });
+    if (!res.ok) throw new Error(await res.text());
+    return res.json();
+}

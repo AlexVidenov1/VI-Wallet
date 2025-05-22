@@ -16,6 +16,25 @@ namespace ViWallet.Controllers
         private readonly AppDbContext _ctx;
         public WalletsController(AppDbContext ctx) => _ctx = ctx;
 
+        [HttpPut("{id:int}")]
+        public async Task<IActionResult> Update(int id, [FromBody] UpdateWalletNameDto dto)
+        {
+            var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            var wallet = await _ctx.Wallets.FirstOrDefaultAsync(w => w.WalletId == id && w.OwnerId == userId);
+            if (wallet == null) return NotFound();
+
+            var new_name = dto.Name.Trim();
+            if (string.IsNullOrWhiteSpace(new_name)) return BadRequest("Name cannot be empty");
+            if (new_name.Length > 50) return BadRequest("Name too long");
+            if (new_name == wallet.Name) return BadRequest("Name not changed");
+
+            var oldName = wallet.Name;
+            wallet.Name = new_name;
+
+            await _ctx.SaveChangesAsync();
+            return Ok(new { wallet.WalletId, Name = wallet.Name });
+        }
+
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] CreateWalletDto dto)
         {
@@ -100,5 +119,9 @@ namespace ViWallet.Controllers
     public class WalletsDto
     {
         public List<WalletDto> Wallets { get; set; } = new();
+    }
+    public class UpdateWalletNameDto
+    {
+        public string Name { get; set; } = null!;
     }
 }

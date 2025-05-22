@@ -34,6 +34,7 @@ import {
     deleteWallet,
     CreateWalletInput,
 } from "../api/wallets";
+import { updateWalletName } from "../api/wallets";
 
 export default function WalletsPage() {
     const qc = useQueryClient();
@@ -42,6 +43,8 @@ export default function WalletsPage() {
     const [newName, setNewName] = useState("");
     const [currencyId, setCurrencyId] = useState<number | "">("");
 
+    const [editId, setEditId] = useState<number | null>(null);
+    const [editName, setEditName] = useState("");
     /* -------------- queries -------------- */
     const {
         data: wallets = [],
@@ -51,7 +54,6 @@ export default function WalletsPage() {
         queryKey: ["wallets"],
         queryFn: getWallets,
     });
-
     const {
         data: currencies = [],
         isPending: curPending,
@@ -76,6 +78,16 @@ export default function WalletsPage() {
         onSuccess: () => qc.invalidateQueries({ queryKey: ["wallets"] }),
     });
 
+
+    const editMutation = useMutation({
+        mutationFn: ({ walletId, name }: { walletId: number; name: string }) =>
+            updateWalletName(walletId, name),
+        onSuccess: () => {
+            qc.invalidateQueries({ queryKey: ["wallets"] });
+            setEditId(null);
+            setEditName("");
+        },
+});
     /* -------------- loading / error state -------------- */
     if (walletsPending || curPending)
         return <Typography sx={{ mt: 4, textAlign: "center" }}>Loading…</Typography>;
@@ -157,26 +169,79 @@ export default function WalletsPage() {
                             </TableRow>
                         </TableHead>
                         <TableBody>
-                            {wallets.map((w) => (
-                                <TableRow key={w.walletId} hover>
-                                    <TableCell>{w.name}</TableCell>
-                                    <TableCell>{w.currencyCode}</TableCell>
-                                    <TableCell align="right">
-                                        {w.balance.toFixed(2)}
-                                    </TableCell>
-                                    <TableCell align="right">
-                                        <IconButton
-                                            size="small"
-                                            color="error"
-                                            onClick={() => delMutation.mutate(w.walletId)}
-                                            disabled={delMutation.isPending}
-                                        >
-                                            <DeleteIcon fontSize="small" />
-                                        </IconButton>
-                                    </TableCell>
-                                </TableRow>
-                            ))}
-                        </TableBody>
+    {wallets.map((w) => (
+        <TableRow key={w.walletId} hover>
+            <TableCell>
+                {editId === w.walletId ? (
+                    <Stack direction="row" spacing={1} alignItems="center">
+                        <TextField
+                            size="small"
+                            value={editName}
+                            onChange={e => setEditName(e.target.value)}
+                            onKeyDown={e => {
+                                if (e.key === "Enter") {
+                                    editMutation.mutate({ walletId: w.walletId, name: editName.trim() });
+                                }
+                                if (e.key === "Escape") {
+                                    setEditId(null);
+                                    setEditName("");
+                                }
+                            }}
+                            autoFocus
+                        />
+                        <Button
+                            size="small"
+                            variant="contained"
+                            onClick={() =>
+                                editMutation.mutate({ walletId: w.walletId, name: editName.trim() })
+                            }
+                            disabled={editMutation.isPending}
+                        >
+                            Save
+                        </Button>
+                        <Button
+                            size="small"
+                            onClick={() => {
+                                setEditId(null);
+                                setEditName("");
+                            }}
+                        >
+                            Cancel
+                        </Button>
+                    </Stack>
+                ) : (
+                    <Stack direction="row" spacing={1} alignItems="center">
+                        <span>{w.name}</span>
+                        <Button
+                            size="small"
+                            onClick={() => {
+                                setEditId(w.walletId);
+                                setEditName(w.name);
+                            }}
+                        >
+                            Edit
+                        </Button>
+                    </Stack>
+                )}
+            </TableCell>
+            <TableCell>{w.currencyCode}</TableCell>
+            <TableCell align="right">
+                {w.balance.toFixed(2)}
+            </TableCell>
+            <TableCell align="right">
+                <IconButton
+                    size="small"
+                    color="error"
+                    onClick={() => delMutation.mutate(w.walletId)}
+                    disabled={delMutation.isPending}
+                >
+                    <DeleteIcon fontSize="small" />
+                </IconButton>
+            </TableCell>
+        </TableRow>
+    ))}
+</TableBody>
+
                     </Table>
                 </TableContainer>
             )}
