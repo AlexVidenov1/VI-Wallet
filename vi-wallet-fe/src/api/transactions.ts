@@ -21,3 +21,23 @@ export const sendTransaction = (input: SendInput) =>
 
 export const revertTransaction = (id: number) =>
   api.post<void>(`/Transactions/${id}/revert`);
+
+export async function exportMyTransactions() {
+    const token = localStorage.getItem("token");
+    const res = await fetch("/api/Transactions/my-transactions/export", {
+        headers: {
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+    });
+    if (!res.ok) throw new Error(await res.text());
+    const blob = await res.blob();
+    // Create a link and trigger download
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "transactions.xlsx";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    window.URL.revokeObjectURL(url);
+}

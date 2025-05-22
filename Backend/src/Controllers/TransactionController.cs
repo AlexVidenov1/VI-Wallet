@@ -1,4 +1,7 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using OfficeOpenXml;
+using System.IO;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Threading.Tasks;
 using ViWallet.Data;
@@ -72,6 +75,50 @@ namespace ViWallet.Controllers
             await _ctx.SaveChangesAsync();
             return Ok("Done");
         }
+
+        [HttpGet("my-transactions/export")]
+        public async Task<IActionResult> ExportMyTransactions()
+        {
+
+            var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            var transactions = await _ctx.Transactions
+                .Where(t => t.SenderId == userId || t.ReceiverId == userId)
+                .Include(t => t.Currency)
+                .OrderByDescending(t => t.TransactionDate)
+                .ToListAsync();
+
+            using var package = new ExcelPackage();
+            var ws = package.Workbook.Worksheets.Add("Transactions");
+
+            // Header
+            ws.Cells[1, 1].Value = "Date";
+            ws.Cells[1, 2].Value = "Amount";
+            ws.Cells[1, 3].Value = "Currency";
+            ws.Cells[1, 4].Value = "Type";
+            ws.Cells[1, 5].Value = "Counterparty";
+
+            // Data
+            for (int i = 0; i < transactions.Count; i++)
+            {
+                var t = transactions[i];
+                ws.Cells[i + 2, 1].Value = t.TransactionDate.ToString("yyyy-MM-dd HH:mm");
+                ws.Cells[i + 2, 2].Value = t.Amount;
+                ws.Cells[i + 2, 3].Value = t.Currency.Code;
+                ws.Cells[i + 2, 4].Value = t.SenderId == userId ? "Sent" : "Received";
+                ws.Cells[i + 2, 5].Value = t.SenderId == userId ? t.ReceiverId.ToString() : t.SenderId.ToString();
+            }
+
+            ws.Cells[ws.Dimension.Address].AutoFitColumns();
+
+            var stream = new MemoryStream(package.GetAsByteArray());
+            stream.Position = 0;
+            return File(
+                stream,
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                "transactions.xlsx"
+            );
+        }
+
 
         /* ----------  1.  LIST  ---------- */
         [ApiController]

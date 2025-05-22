@@ -1,14 +1,17 @@
-using Microsoft.AspNetCore.Authentication.JwtBearer;
+﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using ViWallet.Data;
 using Microsoft.OpenApi.Models;
 using ViWallet.Services;
+using OfficeOpenXml;
+
+ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add CORS policy
+
 var MyCorsPolicy = "_myCorsPolicy";
 builder.Services.AddCors(options =>
 {

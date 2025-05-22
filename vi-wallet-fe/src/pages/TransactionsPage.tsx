@@ -17,6 +17,8 @@ import {
   revertTransaction,
   SendInput,
 } from "../api/transactions";
+import { exportMyTransactions } from "../api/transactions";
+
 
 export default function TransactionsPage() {
   const qc = useQueryClient();
@@ -112,6 +114,12 @@ export default function TransactionsPage() {
         </Button>
       </Box>
 
+      <Button variant="outlined" onClick={exportMyTransactions}>
+                    Download transactions
+                </Button>
+                <Typography sx={{ mt: 1 }} color="text.secondary">
+                    Click the button above to download your transactions in Excel format.
+                    </Typography>
       <TableContainer component={Paper}>
         <Table size="small">
           <TableHead>
@@ -149,7 +157,7 @@ export default function TransactionsPage() {
           </TableBody>
         </Table>
       </TableContainer>
-
+      
       <SendDialog
         open={openSend}
         onClose={() => setOpenSend(false)}
