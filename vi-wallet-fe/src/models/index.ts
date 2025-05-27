@@ -2,7 +2,7 @@ export interface Transaction {
     id: number;
     description: string;
     amount: number;
-    createdAt: string;         // ISO string coming from the API
+    createdAt: string;         
 }
 
 export interface Wallet {
@@ -14,7 +14,6 @@ export interface Wallet {
 
 export interface LoginResponse {
     token: string;
-    // if your login currently returns the transactions
     transactions?: Transaction[];
 }
 export interface Currency {
@@ -25,10 +24,10 @@ export interface Currency {
 export interface Card {
     cardId: number;
     cardNumber: string;
-    expirationDate: string;   // ISO string
+    expirationDate: string;   
     isBlocked: boolean;
     walletId: number;
-    wallet: {                     // minimal data that comes from GET /Card/GetCards
+    wallet: {                     
         name: string;
         currencyCode: string;
         balance: number;

@@ -20,9 +20,9 @@ export default function RoleChip() {
   return (
     <Tooltip
       title={
-        "To upgrade or downgrade your role please contact us:\n" +
-        "e-mail: support@vi-wallet.eu\n" +
-        "phone: 088 888 8888"
+        "За да повишите или понижите ролята си моля свържете се с нас чрез:\n" +
+        "е-мейл: support@vi-wallet.eu\n" +
+        "телефон: 088 888 8888"
       }
       arrow
     >

@@ -21,13 +21,13 @@ export default function Navbar() {
         {token && (
           <>
             <Button color="inherit" component={Link} to="/wallets">
-              Wallets
+                          Портфейли
             </Button>
             <Button color="inherit" component={Link} to="/transactions">
-              Transactions
+                          Транзакции
             </Button>
             <Button color="inherit" component={Link} to="/cards">
-              Cards
+                          Карти
             </Button>
 
             <RoleChip />                                  {/* shows role */}
@@ -39,7 +39,7 @@ export default function Navbar() {
                 nav("/login");     // redirect
               }}
             >
-              Logout
+              Изход
             </Button>
           </>
         )}
@@ -47,7 +47,7 @@ export default function Navbar() {
         {/* Public button ------------------------------------------ */}
         {!token && (
           <Button color="inherit" component={Link} to="/login">
-            Login
+            Вход
           </Button>
         )}
       </Toolbar>
