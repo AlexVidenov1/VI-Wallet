@@ -16,8 +16,23 @@ export interface SendInput {
   amount:     number;
 }
 
-export const sendTransaction = (input: SendInput) =>
-  api.post<void>("/Transactions/send", input);
+export const sendTransaction = async (input: SendInput) => {
+    try {
+        await api.post<void>("/Transactions/send", input);
+    } catch (error: Any) {
+        let msg = "Unknown error";
+        if (error?.response?.data) {
+            if (typeof error.response.data === "string") {
+                msg = error.response.data;
+            } else if (typeof error.response.data === "object" && error.response.data.message) {
+                msg = error.response.data.message;
+            }
+        } else if (error?.message) {
+            msg = error.message;
+        }
+        throw new Error(msg);
+    }
+};
 
 export const revertTransaction = (id: number) =>
   api.post<void>(`/Transactions/${id}/revert`);

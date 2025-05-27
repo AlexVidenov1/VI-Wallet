@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using ViWallet.Services;
@@ -19,7 +19,7 @@ public class UserController : ControllerBase
     public IActionResult GetUserProfile()
     {
         var userName = User.Identity.Name;
-        return Ok(new { message = $"Hello, {userName}! Welcome to VIWallet." });
+        return Ok(new { message = $"Здравей, {userName}! Добре дошъл в 'VIWallet'." });
     }
 
     [HttpGet("role")]
@@ -28,7 +28,7 @@ public class UserController : ControllerBase
         var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (userIdClaim == null)
         {
-            return Unauthorized("User ID not found in token.");
+            return Unauthorized("Недостатъчни права.");
         }
         int userId = int.Parse(userIdClaim);
 

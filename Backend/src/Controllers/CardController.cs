@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Threading.Tasks;
 using ViWallet.Data;
@@ -30,17 +30,17 @@ namespace ViWallet.Controllers
 
             var wallet = await _ctx.Wallets
                          .FirstOrDefaultAsync(w => w.WalletId == dto.WalletId && w.OwnerId == userId);
-            if (wallet == null) return BadRequest("Wallet not found");
+            if (wallet == null) return BadRequest("Портфейлът не е намерен.");
 
             int cardCount = await _ctx.Cards.CountAsync(c => c.WalletId == wallet.WalletId);
             string role = await _userService.GetCurrentRoleAsync(userId);
             int maxCards = role == "ProViUser" ? 3 : 1;
 
             if (cardCount >= maxCards)
-                return BadRequest($"Limit reached: {maxCards} card(s) allowed for this wallet.");
+                return BadRequest($"Лимитът е достигнат: {maxCards} са броят позволени карти за избраният портфейл.");
 
             bool exists = await _ctx.Cards.AnyAsync(c => c.CardNumber == dto.CardNumber);
-            if (exists) return BadRequest("Card number already exists.");
+            if (exists) return BadRequest("Карта с този номер вече съществува");
 
             var card = new Card
             {
@@ -79,7 +79,7 @@ namespace ViWallet.Controllers
             card.LastModified = DateTime.UtcNow;
 
             await _ctx.SaveChangesAsync();
-            return Ok(block ? "Card blocked" : "Card unblocked");
+            return Ok(block ? "Картата е блокирана" : "Картата е отблокирана");
         }
 
         [HttpPost("{id:int}/unblock")]
@@ -105,13 +105,13 @@ namespace ViWallet.Controllers
             card.LastModified = DateTime.UtcNow;
 
             await _ctx.SaveChangesAsync();
-            return Ok("Card unblocked");
+            return Ok("Картата е блокирана.");
         }
 
         [HttpPost("{id:int}/withdraw")]
         public async Task<IActionResult> Withdraw(int id, [FromBody] WithdrawDto dto)
         {
-            if (dto.Amount <= 0) return BadRequest("Amount must be positive");
+            if (dto.Amount <= 0) return BadRequest("Стойността трябва да е по-голяма от 0");
 
             var card = await _ctx.Cards
                             .Include(c => c.Wallet)
@@ -122,10 +122,10 @@ namespace ViWallet.Controllers
             var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
             if (card.Wallet.OwnerId != userId) return Forbid();
 
-            if (card.IsBlocked) return BadRequest("Card is blocked");
+            if (card.IsBlocked) return BadRequest("Картата е блокирана.");
 
             if (card.Wallet.Balance < dto.Amount)
-                return BadRequest("Insufficient wallet balance");
+                return BadRequest("Недостатъчна наличност.");
 
             card.Wallet.Balance -= dto.Amount;
 
@@ -139,7 +139,7 @@ namespace ViWallet.Controllers
             await _ctx.SaveChangesAsync();
 
             // Handle null Currency or Currency.Code
-            var currencyCode = card.Wallet.Currency?.Code ?? "Unknown Currency";
+            var currencyCode = card.Wallet.Currency?.Code ?? "Не е конфигурирана въпросната валута.";
             return Ok($"Withdrew {dto.Amount} {currencyCode}");
         }
 

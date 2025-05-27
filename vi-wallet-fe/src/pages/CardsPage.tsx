@@ -74,7 +74,7 @@ export default function CardsPage() {
 
     /* ─────── Loading / error ─────── */
     if (isPending)
-        return <Typography sx={{ mt: 4, textAlign: "center" }}>Loading…</Typography>;
+        return <Typography sx={{ mt: 4, textAlign: "center" }}>Зареждане…</Typography>;
 
     if (error)
         return (
@@ -87,7 +87,7 @@ export default function CardsPage() {
     return (
         <Box sx={{ p: 3 }}>
             <Typography variant="h4" gutterBottom>
-                Cards
+                Карти
             </Typography>
 
             {/* === BUTTON WHEN LIST IS NOT EMPTY === */}
@@ -98,7 +98,7 @@ export default function CardsPage() {
                         variant="contained"
                         onClick={() => setOpenCreate(true)}
                     >
-                        New card
+                        Нова карта
                     </Button>
                 </Box>
             )}
@@ -107,14 +107,14 @@ export default function CardsPage() {
             {cards.length === 0 && (
                 <Box sx={{ textAlign: "center", mt: 4 }}>
                     <Typography gutterBottom>
-                        You don&apos;t have any cards yet.
+                        Засега нямате създадени карти.
                     </Typography>
                     <Button
                         variant="contained"
                         startIcon={<AddIcon />}
                         onClick={() => setOpenCreate(true)}
                     >
-                        Create card
+                        Създай карта
                     </Button>
                 </Box>
             )}
@@ -125,11 +125,11 @@ export default function CardsPage() {
                     <Table size="small">
                         <TableHead>
                             <TableRow sx={{ bgcolor: "grey.200" }}>
-                                <TableCell>Card #</TableCell>
-                                <TableCell>Expiry</TableCell>
-                                <TableCell>Wallet</TableCell>
-                                <TableCell align="right">Balance</TableCell>
-                                <TableCell align="center">Status</TableCell>
+                                <TableCell>Номер на карта</TableCell>
+                                <TableCell>Дата на изтичане</TableCell>
+                                <TableCell>Портфейл</TableCell>
+                                <TableCell align="right">Баланс</TableCell>
+                                <TableCell align="center">Статус</TableCell>
                                 <TableCell align="right" sx={{ width: 140 }} />
                             </TableRow>
                         </TableHead>
@@ -145,7 +145,7 @@ export default function CardsPage() {
                                         {c.wallet.balance.toFixed(2)} {c.wallet.currencyCode}
                                     </TableCell>
                                     <TableCell align="center">
-                                        {c.isBlocked ? "Blocked" : "Active"}
+                                        {c.isBlocked ? "Блокирана" : "Активна"}
                                     </TableCell>
                                     <TableCell align="right">
                                         {c.isBlocked ? (
@@ -184,14 +184,14 @@ export default function CardsPage() {
 
             {/* === CREATE CARD DIALOG === */}
             <Dialog open={openCreate} onClose={() => setOpenCreate(false)} maxWidth="sm" fullWidth>
-                <DialogTitle>Create new card</DialogTitle>
+                <DialogTitle>Създай нова карта</DialogTitle>
                 <DialogContent dividers>
                     <Stack spacing={2} sx={{ mt: 1 }}>
                         <FormControl size="small" fullWidth>
-                            <InputLabel id="wallet-select">Wallet</InputLabel>
+                            <InputLabel id="wallet-select">Портфейл</InputLabel>
                             <Select
-                                labelId="wallet-select"
-                                label="Wallet"
+                                labelId="Избор на портфейл"
+                                label="Портфейл"
                                 value={walletId}
                                 onChange={(e) => setWalletId(e.target.value as number)}
                             >
@@ -205,7 +205,7 @@ export default function CardsPage() {
 
                         <TextField
                             size="small"
-                            label="Card number"
+                            label="Номер на карта"
                             value={cardNumber}
                             onChange={(e) => setCardNumber(e.target.value)}
                             fullWidth
@@ -214,7 +214,7 @@ export default function CardsPage() {
                         <TextField
                             type="date"
                             size="small"
-                            label="Expiry"
+                            label="Дата на изтичане"
                             InputLabelProps={{ shrink: true }}
                             value={expDate}
                             onChange={(e) => setExpDate(e.target.value)}
@@ -223,7 +223,7 @@ export default function CardsPage() {
                     </Stack>
                 </DialogContent>
                 <DialogActions>
-                    <Button onClick={() => setOpenCreate(false)}>Cancel</Button>
+                    <Button onClick={() => setOpenCreate(false)}>Отказ</Button>
                     <Button
                         onClick={() => {
                             if (
@@ -240,18 +240,18 @@ export default function CardsPage() {
                         }}
                         disabled={createMut.isPending}
                     >
-                        Create
+                        Създай карта
                     </Button>
                 </DialogActions>
             </Dialog>
 
             {/* === WITHDRAW DIALOG === */}
             <Dialog open={withdrawId !== null} onClose={() => setWithdrawId(null)}>
-                <DialogTitle>Withdraw</DialogTitle>
+                <DialogTitle>Теглене</DialogTitle>
                 <DialogContent>
                     <TextField
                         autoFocus
-                        label="Amount"
+                        label="Сума"
                         type="number"
                         value={withdrawAmt}
                         onChange={(e) => setWithdrawAmt(e.target.value)}
@@ -260,7 +260,7 @@ export default function CardsPage() {
                     />
                 </DialogContent>
                 <DialogActions>
-                    <Button onClick={() => setWithdrawId(null)}>Cancel</Button>
+                    <Button onClick={() => setWithdrawId(null)}>Отказ</Button>
                     <Button
                         onClick={() =>
                             withdrawMut.mutate({
@@ -270,7 +270,7 @@ export default function CardsPage() {
                         }
                         disabled={withdrawMut.isPending || !withdrawAmt}
                     >
-                        Withdraw
+                        Теглене
                     </Button>
                 </DialogActions>
             </Dialog>

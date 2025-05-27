@@ -31,6 +31,9 @@ export async function updateWalletName(walletId: number, name: string) {
         },
         body: JSON.stringify({ name }),
     });
-    if (!res.ok) throw new Error(await res.text());
+    if (!res.ok) {
+        const msg = await res.text();
+        throw new Error(msg || "Uknown error");
+    } 
     return res.json();
 }

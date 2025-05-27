@@ -27,21 +27,29 @@ namespace ViWallet.Controllers
         public async Task<IActionResult> Send([FromBody] SendMoneyDto dto)
         {
             if (dto.Amount <= 0)
-                return BadRequest("Amount must be a positive number.");
+                return BadRequest("Стойността трябва да е позитивно число.");
 
-            
+            if (dto.ReceiverId <= 0)
+                return BadRequest("Неправилен уникален номер на получател.");
+
+            if (dto.CurrencyId <= 0)
+                return BadRequest("Невалидна валута.");
+
+            if (dto.Amount < 0.01M)
+                return BadRequest("Стойността трябва да е над 0.01.");
+
             var senderId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
             var sWallet = await _ctx.Wallets
                 .FirstOrDefaultAsync(w => w.OwnerId == senderId && w.CurrencyId == dto.CurrencyId);
-            if (sWallet == null) return BadRequest("Sender has no wallet in that currency");
+            if (sWallet == null) return BadRequest("Изпращачът няма портфейл в избраната валута.");
 
-            if (sWallet.Balance < dto.Amount) return BadRequest("Insufficient funds");
+            if (sWallet.Balance < dto.Amount) return BadRequest("Недостатъчна наличност");
 
             var receiverExists = await _ctx.Users.AnyAsync(u => u.UserId == dto.ReceiverId);
-            if (!receiverExists) return BadRequest("Receiver does not exist.");
+            if (!receiverExists) return BadRequest("Получателят не съществува.");
             if (dto.ReceiverId == senderId)
-                return BadRequest("You cannot transfer to yourself.");
+                return BadRequest("Не може да извършвате трансфер към себе си.");
 
             var rWallet = await _ctx.Wallets
                 .FirstOrDefaultAsync(w => w.OwnerId == dto.ReceiverId && w.CurrencyId == dto.CurrencyId);
@@ -165,7 +173,7 @@ namespace ViWallet.Controllers
         {
             var tx = await _ctx.Transactions.FindAsync(id);
             if (tx == null) return NotFound();
-            if (tx.IsReverted) return BadRequest("Already reverted.");
+            if (tx.IsReverted) return BadRequest("Нямате право да върнете вече върната транзакция.");
 
             // wallets
             var senderWallet = await _ctx.Wallets
@@ -174,10 +182,10 @@ namespace ViWallet.Controllers
                 .FirstOrDefaultAsync(w => w.OwnerId == tx.ReceiverId && w.CurrencyId == tx.CurrencyId);
 
             if (receiverWallet == null || senderWallet == null)
-                return BadRequest("Wallet missing; manual intervention required.");
+                return BadRequest("Портфейлът не съществува. Нужна е ръчна корекция.");
 
             if (receiverWallet.Balance < tx.Amount)
-                return BadRequest("Receiver balance insufficient to revert.");
+                return BadRequest("Балансът на получател е с недостатъчна наличност, за да възстанови сумата.");
 
             // reverse transfer
             receiverWallet.Balance -= tx.Amount;
@@ -196,7 +204,7 @@ namespace ViWallet.Controllers
             });
 
             await _ctx.SaveChangesAsync();
-            return Ok("Transaction reverted.");
+            return Ok("Транзакцията е върната.");
         }
 
         /* ----------  3.  GET MY TRANSACTIONS  ---------- */

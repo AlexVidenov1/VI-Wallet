@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Threading.Tasks;
 using ViWallet.Data;
@@ -24,9 +24,11 @@ namespace ViWallet.Controllers
             if (wallet == null) return NotFound();
 
             var new_name = dto.Name.Trim();
-            if (string.IsNullOrWhiteSpace(new_name)) return BadRequest("Name cannot be empty");
-            if (new_name.Length > 50) return BadRequest("Name too long");
-            if (new_name == wallet.Name) return BadRequest("Name not changed");
+            if (string.IsNullOrWhiteSpace(new_name)) return BadRequest("Името не може да бъде празно.");
+            if (new_name.Length > 50) return BadRequest("Името е твърде дълго.");
+            if (new_name == wallet.Name) return BadRequest("Името не е променено.");
+            if (await _ctx.Wallets.AnyAsync(w => w.OwnerId == userId && w.Name == new_name && w.WalletId != id))
+                return BadRequest("Вече имате портфейл с това име! Моля изберете друго име.");
 
             var oldName = wallet.Name;
             wallet.Name = new_name;
@@ -41,11 +43,19 @@ namespace ViWallet.Controllers
             var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
             var currency = await _ctx.Currencies.FindAsync(dto.CurrencyId);
-            if (currency == null) return BadRequest("Invalid currency");
+            if (currency == null) return BadRequest("Невалидна валута.");
 
             var exists = await _ctx.Wallets
                           .AnyAsync(w => w.OwnerId == userId && w.CurrencyId == dto.CurrencyId);
-            if (exists) return BadRequest("Wallet in that currency already exists");
+            if (exists) return BadRequest("Вече имате портфейл в избраната валута.");
+            if (string.IsNullOrWhiteSpace(dto.Name) || dto.Name.Length > 50)
+                return BadRequest("Името не може да бъде празно или по-дълго от 50 букви/цифри.");
+            if (await _ctx.Wallets.AnyAsync(w => w.OwnerId == userId && w.Name == dto.Name))
+                return BadRequest("Портфейл с това име вече съществува.");
+            if (dto.Name.Trim().Length == 0)
+                return BadRequest("Името не може да бъде празно.");
+            if (dto.CurrencyId == 0)
+                return BadRequest("Моля, изберете валута.");
 
             var w = new Wallet
             {
@@ -64,9 +74,11 @@ namespace ViWallet.Controllers
             var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
             var w = await _ctx.Wallets.FirstOrDefaultAsync(x => x.WalletId == id && x.OwnerId == userId);
             if (w == null) return NotFound();
-            if (w.Balance != 0) return BadRequest("Wallet not empty");
+            if (w.Balance != 0) return BadRequest("Портфейлът има наличност. Моля изтеглете наличността си или се обърнете към технитечки отдел.");
+            if (await _ctx.Cards.AnyAsync(c => c.WalletId == w.WalletId))
+                return BadRequest("Портфейлът има издадени карти. Моля, направете заявка за тяхното изтриване преди закриване на портфейл.");
 
-            _ctx.Wallets.Remove(w);
+                _ctx.Wallets.Remove(w);
             await _ctx.SaveChangesAsync();
             return NoContent();
         }
@@ -100,7 +112,12 @@ namespace ViWallet.Controllers
                     CurrencyCode = w.Currency.Code
                 })
                 .FirstOrDefaultAsync();
-            if (wallet == null) return NotFound();
+            if (wallet == null) return NotFound("Портфейлът не е намерен.");
+            if (wallet.Balance < 0)
+                return BadRequest("Балансът по портфейл не може да бъде с отрицателна стойност.");
+            if (string.IsNullOrWhiteSpace(wallet.CurrencyCode))
+                return BadRequest("Валутата на портфейла не е зададена.");
+
             return Ok(wallet);
         }
     }

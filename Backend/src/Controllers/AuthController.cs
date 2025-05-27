@@ -30,8 +30,14 @@ namespace ViWallet.Controllers
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterDto dto)
         {
+            if (dto == null)
+                return BadRequest("Невалидна дата на регистрация");
+
+            if (string.IsNullOrWhiteSpace(dto.FullName) || string.IsNullOrWhiteSpace(dto.Email) || string.IsNullOrWhiteSpace(dto.Password))
+                return BadRequest("Необходими са е-мейл и парола.");
+            
             if (await _dbContext.Users.AnyAsync(u => u.Email == dto.Email))
-                return BadRequest("Email already registered.");
+                return BadRequest("Е-мейла е вече регистриран");
 
             var viUserRoleId = await _dbContext.Roles
                                .Where(r => r.Name == "ViUser")
@@ -56,7 +62,7 @@ namespace ViWallet.Controllers
 
             var wallet = new Wallet
             {
-                Name = "EUR Wallet",
+                Name = "EUR портфейл",
                 CurrencyId = eurId,
                 OwnerId = newUser.UserId,
                 Balance = 0M
@@ -65,7 +71,7 @@ namespace ViWallet.Controllers
             _dbContext.Wallets.Add(wallet);
             await _dbContext.SaveChangesAsync();
 
-            return Ok("User registered with default EUR wallet");
+            return Ok("Потребителят е регистриран с портфейл в ЕВРО.");
         }
 
         [HttpPost("login")]
@@ -76,7 +82,7 @@ namespace ViWallet.Controllers
                 .FirstOrDefaultAsync(u => u.Email == dto.Email && u.PasswordHash == dto.Password);
 
             if (user == null)
-                return Unauthorized("Invalid credentials");
+                return Unauthorized("Невалидни данни.");
 
             // Check subscription
             var sub = await _dbContext.Subscriptions.FirstOrDefaultAsync(s => s.UserId == user.UserId);
