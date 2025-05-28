@@ -21,8 +21,8 @@ export default function AppRouter() {
                 {/* protected */}
                 <Route element={<ProtectedRoute />}>
                     <Route path="/" element={<Dashboard />} />
-                    <Route path="/admin/transactions" element={<AdminPage />} /> {/* ← add */}
-                    <Route path="/transactions" element={<TransactionsPage />} /> {/* ← add */}
+                    <Route path="/admin/transactions" element={<AdminPage />} /> 
+                    <Route path="/transactions" element={<TransactionsPage />} /> 
                 </Route>
                 <Route element={<ProtectedRoute />}>
                     <Route path="/wallets" element={<WalletsPage />} />
@@ -33,7 +33,7 @@ export default function AppRouter() {
                     <Route path="/" element={<Dashboard />} />
                     <Route path="/transactions" element={<TransactionsPage />} />
                     <Route path="/wallets" element={<WalletsPage />} />
-                    <Route path="/cards" element={<CardsPage />} />      {/* NEW */}
+                    <Route path="/cards" element={<CardsPage />} />     
                 </Route>
                 <Route path="*" element={<Navigate to="/" />} />
             </Routes>

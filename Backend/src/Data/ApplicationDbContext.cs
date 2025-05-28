@@ -27,6 +27,8 @@ namespace ViWallet.Data
         {
             base.OnModelCreating(modelBuilder);
 
+            modelBuilder.Entity<LogEntry>().ToTable("Log_20118073");
+
             modelBuilder.Entity<Transaction>()
                 .HasOne(t => t.Sender)
                 .WithMany(u => u.SentTransactions)
@@ -73,6 +75,7 @@ namespace ViWallet.Data
                 new Currency { CurrencyId = 1, Code = "BGN", Name = "Lev", ExchangeRate = 1.9583M, LastModified = seedTime },
                 new Currency { CurrencyId = 2, Code = "EUR", Name = "Euro", ExchangeRate = 1, LastModified = seedTime }
             );
+            modelBuilder.Entity<LogEntry>().ToTable("Log_20118073");
 
             modelBuilder.Entity<User>()
                 .HasIndex(u => u.Email)
