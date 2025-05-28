@@ -2,41 +2,45 @@
 import { Link, useNavigate } from "react-router-dom";
 import RoleChip from "./RoleChip";
 import { useAuth } from "../context/AuthContext";
+import { getUserRole } from "../pages/auth/AuthContext"; // adjust path if needed
 
 export default function Navbar() {
   const nav = useNavigate();
-  const { token, logout } = useAuth();     // ← reactive
+  const { token, logout } = useAuth();
+  const userRole = getUserRole();
+  const isAdmin = userRole === "Admin";
 
   return (
     <AppBar position="static">
       <Toolbar sx={{ gap: 2 }}>
-        {/* Brand --------------------------------------------------- */}
         <Typography variant="h6" sx={{ flexGrow: 1 }}>
           <Link to="/" style={{ color: "inherit", textDecoration: "none" }}>
             VI-Wallet
           </Link>
         </Typography>
 
-        {/* Protected buttons -------------------------------------- */}
         {token && (
           <>
             <Button color="inherit" component={Link} to="/wallets">
-                          Портфейли
+              Портфейли
             </Button>
             <Button color="inherit" component={Link} to="/transactions">
-                          Транзакции
+              Транзакции
             </Button>
             <Button color="inherit" component={Link} to="/cards">
-                          Карти
+              Карти
             </Button>
-
-            <RoleChip />                                  {/* shows role */}
-
+            {isAdmin && (
+              <Button color="inherit" component={Link} to="/admin/transactions">
+                Админ транзакции
+              </Button>
+            )}
+            <RoleChip />
             <Button
               color="inherit"
               onClick={() => {
-                logout();          // clears token + state
-                nav("/login");     // redirect
+                logout();
+                nav("/login");
               }}
             >
               Изход
@@ -44,7 +48,6 @@ export default function Navbar() {
           </>
         )}
 
-        {/* Public button ------------------------------------------ */}
         {!token && (
           <Button color="inherit" component={Link} to="/login">
             Вход

@@ -237,6 +237,42 @@ namespace ViWallet.Controllers
 
     }
 
+    [ApiController]
+    [Route("api/admin/transactions")]
+    [Authorize(Roles = "Admin")]
+    public class AdminTransactionsController : ControllerBase
+    {
+        private readonly AppDbContext _ctx;
+
+        public AdminTransactionsController(AppDbContext ctx)
+        {
+            _ctx = ctx;
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> ListTransactions(int page = 1, int pageSize = 10)
+        {
+            var data = await _ctx.Transactions
+                .Include(t => t.Currency)
+                .OrderByDescending(t => t.TransactionDate)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .Select(t => new
+                {
+                    t.TransactionId,
+                    t.SenderId,
+                    t.ReceiverId,
+                    Currency = t.Currency.Code,
+                    t.Amount,
+                    t.TransactionDate,
+                    t.IsReverted
+                })
+                .ToListAsync();
+
+            return Ok(data);
+        }
+    }
+
     public class SendMoneyDto
         {
             public int ReceiverId { get; set; }

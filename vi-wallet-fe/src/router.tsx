@@ -7,6 +7,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import TransactionsPage from "./pages/TransactionsPage";
 import WalletsPage from "./pages/WalletsPage";
 import CardsPage from "./pages/CardsPage";
+import AdminPage from "./pages/AdminTransactionsPage";
 
 export default function AppRouter() {
     return (
@@ -20,6 +21,7 @@ export default function AppRouter() {
                 {/* protected */}
                 <Route element={<ProtectedRoute />}>
                     <Route path="/" element={<Dashboard />} />
+                    <Route path="/admin/transactions" element={<AdminPage />} /> {/* ← add */}
                     <Route path="/transactions" element={<TransactionsPage />} /> {/* ← add */}
                 </Route>
                 <Route element={<ProtectedRoute />}>

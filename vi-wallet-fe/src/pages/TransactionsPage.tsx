@@ -1,4 +1,4 @@
-﻿import React, { useState } from "react";
+﻿import React, { useState, useMemo } from "react";
 import {
     Box, Typography, Paper, TableContainer, Table, TableHead,
     TableRow, TableCell, TableBody, Button, Dialog, DialogTitle,
@@ -19,6 +19,7 @@ import {
     SendInput, exportMyTransactions
 } from "../api/transactions";
 import { useSnackbar } from "notistack";
+import { getUserRole } from "../pages/auth/AuthContext"; // adjust path as needed
 
 /* ──────────────────────────────── STYLED COMPONENTS ──────────────────────────────── */
 
@@ -51,6 +52,10 @@ export default function TransactionsPage() {
     const qc = useQueryClient();
     const { enqueueSnackbar } = useSnackbar();
 
+    // Get user role for admin check
+    const userRole = getUserRole();
+    const isAdmin = userRole === "Admin";
+
     /* queries */
     const { data: tx = [], isPending, error } = useQuery<Transaction[]>({
         queryKey: ["transactions"],
@@ -62,9 +67,21 @@ export default function TransactionsPage() {
         queryFn: getCurrencies
     });
 
+    // You may need to get the current userId for type filtering
+    // Replace this with your actual user id logic
+    const userId = Number(localStorage.getItem("userId")) || 0;
+
     /* dialog state */
     const [openSend, setOpenSend] = useState(false);
     const [send, setSend] = useState<SendInput>({ receiverId: 0, currencyId: 0, amount: 0 });
+
+    /* filter state */
+    const [filter, setFilter] = useState({
+        currencyId: "",
+        minAmount: "",
+        maxAmount: "",
+        type: "" // "sent" | "received" | ""
+    });
 
     /* mutations */
     const sendMut = useMutation({
@@ -84,6 +101,18 @@ export default function TransactionsPage() {
         onSuccess: () => qc.invalidateQueries({ queryKey: ["transactions"] }),
         onError: (err: Error) => enqueueSnackbar(err.message, { variant: "error" })
     });
+
+    /* filter logic */
+    const filteredTx = useMemo(() => {
+        return tx.filter(t => {
+            if (filter.currencyId && t.currencyId !== +filter.currencyId) return false;
+            if (filter.minAmount && t.amount < +filter.minAmount) return false;
+            if (filter.maxAmount && t.amount > +filter.maxAmount) return false;
+            if (filter.type === "sent" && t.senderId !== userId) return false;
+            if (filter.type === "received" && t.receiverId !== userId) return false;
+            return true;
+        });
+    }, [tx, filter, userId]);
 
     /* loading / error */
     if (isPending) {
@@ -126,10 +155,63 @@ export default function TransactionsPage() {
                         </Button>
                     </Stack>
 
+                    {/* Filters */}
+                    <Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 2 }}>
+                        <FormControl size="small" sx={{ minWidth: 120 }}>
+                            <InputLabel id="filter-currency-label">Валута</InputLabel>
+                            <Select
+                                labelId="filter-currency-label"
+                                label="Валута"
+                                value={filter.currencyId}
+                                onChange={e => setFilter(f => ({ ...f, currencyId: e.target.value }))}
+                            >
+                                <MenuItem value="">Всички</MenuItem>
+                                {currencies.map(c => (
+                                    <MenuItem key={c.id} value={c.id}>{c.code}</MenuItem>
+                                ))}
+                            </Select>
+                        </FormControl>
+                        <TextField
+                            size="small"
+                            label="Мин. сума"
+                            type="number"
+                            value={filter.minAmount}
+                            onChange={e => setFilter(f => ({ ...f, minAmount: e.target.value }))}
+                            sx={{ width: 100 }}
+                        />
+                        <TextField
+                            size="small"
+                            label="Макс. сума"
+                            type="number"
+                            value={filter.maxAmount}
+                            onChange={e => setFilter(f => ({ ...f, maxAmount: e.target.value }))}
+                            sx={{ width: 100 }}
+                        />
+                        <FormControl size="small" sx={{ minWidth: 120 }}>
+                            <InputLabel id="filter-type-label">Тип</InputLabel>
+                            <Select
+                                labelId="filter-type-label"
+                                label="Тип"
+                                value={filter.type}
+                                onChange={e => setFilter(f => ({ ...f, type: e.target.value }))}
+                            >
+                                <MenuItem value="">Всички</MenuItem>
+                                <MenuItem value="sent">Изпратени</MenuItem>
+                                <MenuItem value="received">Получени</MenuItem>
+                            </Select>
+                        </FormControl>
+                        <Button
+                            size="small"
+                            onClick={() => setFilter({ currencyId: "", minAmount: "", maxAmount: "", type: "" })}
+                        >
+                            Изчисти филтрите
+                        </Button>
+                    </Stack>
+
                     {/* Table / Empty state */}
-                    {tx.length === 0 ? (
+                    {filteredTx.length === 0 ? (
                         <Typography textAlign="center" color="text.secondary">
-                            Няма извършени транзакции
+                            Няма транзакции с избраните филтри
                         </Typography>
                     ) : (
                         <TableContainer component={Paper} sx={{ borderRadius: 2 }}>
@@ -143,7 +225,7 @@ export default function TransactionsPage() {
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
-                                    {tx.map((t) => (
+                                    {filteredTx.map((t) => (
                                         <BodyRow hover key={t.id}>
                                             <TableCell>
                                                 {new Date(t.createdAt).toLocaleDateString()}
@@ -151,13 +233,15 @@ export default function TransactionsPage() {
                                             <TableCell>{t.description}</TableCell>
                                             <TableCell><AmountChip value={t.amount} /></TableCell>
                                             <TableCell>
-                                                <IconButton
-                                                    size="small"
-                                                    color="warning"
-                                                    onClick={() => revertMut.mutate(t.id)}
-                                                >
-                                                    <UndoIcon fontSize="small" />
-                                                </IconButton>
+                                                {isAdmin && (
+                                                    <IconButton
+                                                        size="small"
+                                                        color="warning"
+                                                        onClick={() => revertMut.mutate(t.id)}
+                                                    >
+                                                        <UndoIcon fontSize="small" />
+                                                    </IconButton>
+                                                )}
                                             </TableCell>
                                         </BodyRow>
                                     ))}
@@ -188,7 +272,7 @@ interface SendDialogProps {
     onClose: () => void;
     send: SendInput;
     setSend: React.Dispatch<React.SetStateAction<SendInput>>;
-    mutate: UseMutationResult<any, any, SendInput>;   // relaxed typing
+    mutate: UseMutationResult<any, any, SendInput>;
     currencies: Currency[];
 }
 

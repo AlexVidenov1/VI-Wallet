@@ -24,3 +24,20 @@ export const useAuth = () => {
   if (!ctx) throw new Error("useAuth must be used inside <AuthProvider>");
   return ctx;
 };
+
+export function getUserRole(): string | null {
+    const token = localStorage.getItem("token");
+    if (!token) return null;
+    try {
+        const payload = JSON.parse(atob(token.split(".")[1]));
+        // Try both common claim types
+        return (
+            payload["role"] ||
+            payload["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"] ||
+            payload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/role"] ||
+            null
+        );
+    } catch {
+        return null;
+    }
+}

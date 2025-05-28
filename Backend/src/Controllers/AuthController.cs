@@ -85,40 +85,40 @@ namespace ViWallet.Controllers
                 return Unauthorized("Невалидни данни.");
 
             // Check subscription
-            var sub = await _dbContext.Subscriptions.FirstOrDefaultAsync(s => s.UserId == user.UserId);
-            if (sub == null)
-            {
-                sub = new Subscription
-                {
-                    UserId = user.UserId,
-                    PaidUntil = DateTime.UtcNow.AddMonths(1)
-                };
-                _dbContext.Subscriptions.Add(sub);
-            }
-            else
-            {
-                sub.PaidUntil = sub.PaidUntil < DateTime.UtcNow
-                    ? DateTime.UtcNow.AddMonths(1)
-                    : sub.PaidUntil.AddMonths(1);
-            }
+            //var sub = await _dbContext.Subscriptions.FirstOrDefaultAsync(s => s.UserId == user.UserId);
+            //if (sub == null)
+            //{
+            //    sub = new Subscription
+            //    {
+            //        UserId = user.UserId,
+            //        PaidUntil = DateTime.UtcNow.AddMonths(1)
+            //    };
+            //    _dbContext.Subscriptions.Add(sub);
+            //}
+            //else
+            //{
+            //    sub.PaidUntil = sub.PaidUntil < DateTime.UtcNow
+            //        ? DateTime.UtcNow.AddMonths(1)
+            //        : sub.PaidUntil.AddMonths(1);
+            //}
 
             // Update user role based on subscription
-            if (sub.PaidUntil > DateTime.UtcNow)
-            {
-                var proViUserRoleId = await _dbContext.Roles
-                    .Where(r => r.Name == "ProViUser")
-                    .Select(r => r.RoleId)
-                    .FirstAsync();
-                user.RoleId = proViUserRoleId;
-            }
-            else
-            {
-                var viUserRoleId = await _dbContext.Roles
-                    .Where(r => r.Name == "ViUser")
-                    .Select(r => r.RoleId)
-                    .FirstAsync();
-                user.RoleId = viUserRoleId;
-            }
+            //if (sub.PaidUntil > DateTime.UtcNow)
+            //{
+            //    var proViUserRoleId = await _dbContext.Roles
+            //        .Where(r => r.Name == "ProViUser")
+            //        .Select(r => r.RoleId)
+            //        .FirstAsync();
+            //    user.RoleId = proViUserRoleId;
+            //}
+            //else
+            //{
+            //    var viUserRoleId = await _dbContext.Roles
+            //        .Where(r => r.Name == "ViUser")
+            //        .Select(r => r.RoleId)
+            //        .FirstAsync();
+            //    user.RoleId = viUserRoleId;
+            //}
 
             await _dbContext.SaveChangesAsync();
             await _dbContext.Entry(user).Reference(u => u.Role).LoadAsync();
