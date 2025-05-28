@@ -2,12 +2,10 @@
 import {
     Box, Typography, Paper, TableContainer, Table, TableHead,
     TableRow, TableCell, TableBody, Button, Dialog, DialogTitle,
-    DialogContent, DialogActions, TextField, Stack, IconButton,
-    FormControl, InputLabel, Select, MenuItem, Chip, CircularProgress,
-    Container
+    DialogContent, DialogActions, TextField, Stack, FormControl,
+    InputLabel, Select, MenuItem, Chip, CircularProgress, Container
 } from "@mui/material";
 import { styled } from "@mui/material/styles";
-import UndoIcon from "@mui/icons-material/Undo";
 import AddIcon from "@mui/icons-material/Add";
 import FileDownloadOutlinedIcon from "@mui/icons-material/FileDownloadOutlined";
 
@@ -15,7 +13,7 @@ import { useQuery, useMutation, useQueryClient, UseMutationResult } from "@tanst
 import { Transaction, Currency } from "../models";
 import { getCurrencies } from "../api/currencies";
 import {
-    getMyTransactions, sendTransaction, revertTransaction,
+    getMyTransactions, sendTransaction,
     SendInput, exportMyTransactions
 } from "../api/transactions";
 import { useSnackbar } from "notistack";
@@ -94,12 +92,6 @@ export default function TransactionsPage() {
         },
         onError: (e: any) =>
             enqueueSnackbar(e?.message ?? "Неуспех при извършване на транзакция", { variant: "error" })
-    });
-
-    const revertMut = useMutation({
-        mutationFn: (id: number) => revertTransaction(id),
-        onSuccess: () => qc.invalidateQueries({ queryKey: ["transactions"] }),
-        onError: (err: Error) => enqueueSnackbar(err.message, { variant: "error" })
     });
 
     /* filter logic */
@@ -221,7 +213,7 @@ export default function TransactionsPage() {
                                         <HeadCell>Дата</HeadCell>
                                         <HeadCell>Описание</HeadCell>
                                         <HeadCell>Сума</HeadCell>
-                                        <HeadCell sx={{ width: 56 }} />
+                                        <HeadCell>Получател</HeadCell>
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
@@ -233,15 +225,7 @@ export default function TransactionsPage() {
                                             <TableCell>{t.description}</TableCell>
                                             <TableCell><AmountChip value={t.amount} /></TableCell>
                                             <TableCell>
-                                                {isAdmin && (
-                                                    <IconButton
-                                                        size="small"
-                                                        color="warning"
-                                                        onClick={() => revertMut.mutate(t.id)}
-                                                    >
-                                                        <UndoIcon fontSize="small" />
-                                                    </IconButton>
-                                                )}
+                                                {t.receiverId}
                                             </TableCell>
                                         </BodyRow>
                                     ))}
