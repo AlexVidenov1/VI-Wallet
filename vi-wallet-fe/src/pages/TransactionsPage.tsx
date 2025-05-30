@@ -220,8 +220,11 @@ export default function TransactionsPage() {
                                     {filteredTx.map((t) => (
                                         <BodyRow hover key={t.id}>
                                             <TableCell>
-                                                {new Date(t.createdAt).toLocaleDateString()}
+                                                {t.transactionDate
+                                                    ? new Date(t.transactionDate).toLocaleDateString(undefined, { year: "numeric", month: "2-digit", day: "2-digit" })
+                                                    : "—"}
                                             </TableCell>
+
                                             <TableCell>{t.description}</TableCell>
                                             <TableCell><AmountChip value={t.amount} /></TableCell>
                                             <TableCell>
